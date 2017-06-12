@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
@@ -7,13 +10,14 @@ namespace AssemblySoft.DevOps
     public class DevOpsTask // : IDevOpsTask
     {
         public string Id { get; set; }
-        public string ParentId { get; set; }
+        //public string ParentId { get; set; }
         public string AssemblyPath { get; set; }
         public string Namespace { get; set; }
         public string Method { get; set; }
         public bool Enabled { get; set; }
         public int Order { get; set; }
-        public string Description { get; set; }        
+        public string Description { get; set; }
+        //public string Remarks { get; set; }
         public DevOpsTaskStatus Status;
 
         //[NonSerialized]
@@ -24,7 +28,11 @@ namespace AssemblySoft.DevOps
 
         [NonSerialized]
         [XmlIgnore]
-        public Func<DevOpsTaskStatus, Task> runTask; 
+        public Func<DevOpsTaskStatus, Task> runTask;
+
+        [NonSerialized]
+        [XmlIgnore]
+        public Func<Task<DevOpsTaskStatus>> func;
 
         [NonSerialized]
         [XmlIgnore]
@@ -52,7 +60,16 @@ namespace AssemblySoft.DevOps
 
             await runTask(status);
             
+
+
+            //runActionRef?.Invoke(ref status);
         }
+
+
+        //public void Run(DevOpsTaskStatus status)
+        //{
+        //    runActionVal?.Invoke(status);
+        //}
 
         public void Run()
         {

@@ -4,45 +4,203 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+
 using AssemblySoft.Serialization;
 
 
 namespace AssemblySoft.DevOps
 {
-
+    /// <summary>
+    /// Rsponsible for running a series of tasks
+    /// </summary>
     public partial class TaskRunner
     {
         public TaskRunner()
         {
         }
+        
+        IEnumerable<DevOpsTask> _devOpsTasks;
 
-        public delegate void TaskStatusEventHandler(TaskStatusEventArg e);
-        public event TaskStatusEventHandler TaskStatus;
-
-        Assembly _invokingAssembly;
-
-        IEnumerable<DevOpsTask> _tasks;
-        public IEnumerable<DevOpsTask> GetDevOpsTaskWithState()
+        /// <summary>
+        /// Run collection of Dev Ops Tasks given a file path
+        /// </summary>
+        /// <param name="filePath">File path to load task collection from</param>
+        public void Run(string filePath)
         {
-            return _tasks;
+            ICollection<DevOpsTask> tasks;
+            try
+            {
+                tasks = LoadTasksFromFile(filePath);
+
+                if (tasks == null || tasks.Count <= 0)
+                {
+                    throw new DevOpsTaskException("Unable to load tasks from file path");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new DevOpsTaskException("Unable to load tasks from file path", ex);
+            }
+
+            Run(tasks);
         }
 
+        /// <summary>
+        /// Run collection of Dev Ops Tasks
+        /// </summary>
+        /// <param name="devOpsTasks"></param>
+        public void Run(IEnumerable<DevOpsTask> devOpsTasks)
+        {
+            try
+            {
+                var funcCount = BindFuncs(devOpsTasks.Where(t => t.Enabled == true)); //filter out tasks marked as disabled
+                if (funcCount <= 0)
+                {
+                    throw new DevOpsTaskException("Unable to link methods to tasks");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new DevOpsTaskException("Unable to bind methods to task declarations", ex);
+            }
+
+            _devOpsTasks = devOpsTasks.ToList();
+            DevOpsTask currentDevOpsTask;
+            int currentOrder = 0;
+
+            //split into groups by order
+            List<List<DevOpsTask>> orderGrouped = new List<List<DevOpsTask>>();
+            var devOpsTaskGroups = _devOpsTasks.GroupBy(t => t.Order);
+
+            string correlationId = Guid.NewGuid().ToString();
+            BroadcastStatus(String.Format("Started processing tasks {0} {1}", correlationId, DateTime.UtcNow));
+
+            foreach (var devOpsTaskSet in devOpsTaskGroups)
+            {
+                List<Task> tasksCollection = new List<Task>();
+
+                foreach (var devOpsTask in devOpsTaskSet)
+                {
+                    currentDevOpsTask = devOpsTask;
+                    currentOrder = devOpsTask.Order;
+
+                    try
+                    {
+                        devOpsTask.Status = DevOpsTaskStatus.Started;
+
+                        if (!devOpsTask.Enabled)
+                        {
+                            devOpsTask.Status = DevOpsTaskStatus.Skipped;
+                        }
+
+                        BroadcastStatus(String.Format("{0} {1} {2} ({3}) {4}", devOpsTask.Status, devOpsTask.Description, correlationId, devOpsTask.Order, DateTime.UtcNow));
+
+                        List<Task> tasks = new List<Task>();
+                        if (devOpsTask.Enabled)
+                        {                            
+                            Task task = new Task(() =>
+                            {
+                                BroadcastStatus(String.Format("Task Id: {0} Thread Id {1} {2} ({3}) {4}", Task.CurrentId, Thread.CurrentThread.ManagedThreadId, correlationId, devOpsTask.Order, devOpsTask.Description));
+
+                                var start = System.Environment.TickCount;
+
+                                if (devOpsTask.func != null)
+                                {
+                                    devOpsTask.Status = devOpsTask.func.Invoke().Result;
+                                }
+
+                                var stop = System.Environment.TickCount;
+                                double elapsedTimeSeconds = (stop - start) / 1000;
+                                devOpsTask.LastExecutionDuration = string.Format("{0:#,##0.00}", elapsedTimeSeconds);
+
+                                if (devOpsTask.Enabled) //only report on enabled tasks                    
+                                {
+                                    BroadcastStatus(String.Format("{0} {1} {2} ({3}) {4} {5}", devOpsTask.Status, devOpsTask.Description, correlationId, devOpsTask.Order, devOpsTask.LastExecutionDuration, DateTime.UtcNow));
+                                    //task.Enabled = false; //updates to disabled
+                                }
+
+                            });
+
+                            tasksCollection.Add(task);
+                            task.Start();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        //ToDo: change method of logging as this may also cause an exception
+                        throw new DevOpsTaskException(currentDevOpsTask, ex.Message);
+                    }
+                    finally
+                    {
+                    }
+                }
+
+
+                Task t = Task.WhenAll(tasksCollection);
+                try
+                {
+                    t.Wait();
+                }
+                catch
+                {
+
+                }
+
+                if (t.Status == System.Threading.Tasks.TaskStatus.RanToCompletion)
+                {
+                    BroadcastStatus(String.Format("All tasks in the set completed {0} ({1})", correlationId, currentOrder));
+                }
+                else
+                {
+                    BroadcastStatus(String.Format("At least one task failed to run with status: {0} {1}", correlationId, t.Status));
+
+                    //show report of all tasks for brevity
+                    foreach (var task in devOpsTaskSet)
+                    {
+                        if (task.Enabled) //only report on enabled tasks                    
+                        {
+                            BroadcastStatus(String.Format("{0} {1} {2} ({3}) {4}", task.Status, task.Description, correlationId, task.Order, task.LastExecutionDuration));
+                        }
+                    }
+                }
+
+            }
+
+            BroadcastStatus(String.Format("Stopped processing tasks {0}", DateTime.UtcNow));
+        }
+
+        /// <summary>
+        /// Broadcasts the current status of a task
+        /// </summary>
+        /// <param name="msg"></param>
         private void BroadcastStatus(string msg)
         {
             RaiseTaskStatusEvent(msg);
         }
 
+        public delegate void TaskStatusEventHandler(TaskStatusEventArg e);
+        public event TaskStatusEventHandler TaskStatus;
+        /// <summary>
+        /// Raises a task status event
+        /// </summary>
+        /// <param name="status"></param>
         private void RaiseTaskStatusEvent(string status)
         {
-            var statusArgs = new TaskStatusEventArg
+            TaskStatusEventArg statusArgs = new TaskStatusEventArg
             {
                 Status = status
             };
 
             TaskStatus?.Invoke(statusArgs);
-        }       
+        }
 
+        /// <summary>
+        /// Loads a task collection from a file
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
         private ICollection<DevOpsTask> LoadTasksFromFile(string filePath)
         {
             var tasks = GetTasksFromFile(filePath);
@@ -52,162 +210,66 @@ namespace AssemblySoft.DevOps
             }
 
             return tasks;
-        }        
+        }
 
-        private int BindActions(IEnumerable<DevOpsTask> tasks)
+        /// <summary>
+        /// Binds the methods declared in the task collection
+        /// </summary>
+        /// <param name="tasks"></param>
+        /// <returns></returns>
+        private int BindFuncs(IEnumerable<DevOpsTask> tasks)
         {
-            var actions = 0;
+            var funcs = 0;
+            var rootPath = ConfigurationManager.AppSettings["buildTasksPath"];
+            if (string.IsNullOrEmpty(rootPath))
+            {
+                throw new DevOpsTaskException("Unable to load Build tasks root path [buildTasksPath]");
+            }
+
             foreach (var item in tasks)
             {
-                var path = Path.Combine(ConfigurationManager.AppSettings["buildTasksPath"], item.AssemblyPath);
+                var path = Path.Combine(rootPath, item.Assembly);
                 Assembly asm = Assembly.LoadFrom(path);
                 Type t = asm.GetType(item.Namespace);
                 var methodInfo = t.GetMethod(item.Method);
                 var instance = Activator.CreateInstance(t);
-                if(instance == null)
+                if (instance == null)
                 {
                     throw new DevOpsTaskException("Unable to create instance of type");
                 }
 
-                Func<DevOpsTaskStatus, Task> action = (Func<DevOpsTaskStatus, Task>)Delegate.CreateDelegate(typeof(Func<DevOpsTaskStatus, Task>), instance, methodInfo);
-                item.runTask = action;
-
-                actions++;
+                Func<Task<DevOpsTaskStatus>> func = (Func<Task<DevOpsTaskStatus>>)Delegate.CreateDelegate(typeof(Func<Task<DevOpsTaskStatus>>), instance, methodInfo);
+                item.func = func;
+                funcs++;
             }
 
-            return actions;
-        }
-       
-        public async Task Run(string filePath)
-        {
-            var tasks = LoadTasksFromFile(filePath);
-
-            var actionCount = BindActions(tasks.Where(t => t.Enabled == true)); //filter out tasks marked as disabled
-            if (actionCount <= 0)
-            {
-                throw new DevOpsTaskException("Unable to link methods to tasks");
-            }
-
-            await Run(tasks);
-
+            return funcs;
         }        
 
-        public async Task Run(IEnumerable<DevOpsTask> tasks)
-        {
-            _tasks = tasks.ToList();
-            DevOpsTask currentTask;
-
-            //split into groups of orders
-            List<List<DevOpsTask>> orderGrouped = new List<List<DevOpsTask>>();
-            var taskGroups = _tasks.GroupBy(t => t.Order);
-            
-            foreach(var taskSet in taskGroups)
-            {              
-
-                List<Task> tasksCollection = new List<Task>();
-
-                foreach (var task in taskSet)
-                {
-                    currentTask = task;
-
-                    try
-                    {
-                        if (task.Enabled)
-                        {
-                            BroadcastStatus(String.Format("Starting {0}", task.Description));
-                            task.Status = DevOpsTaskStatus.Started;
-                        }
-                        else
-                        {
-                            BroadcastStatus(String.Format("Skipped {0}", task.Description));
-                            task.Status = DevOpsTaskStatus.Skipped;
-                        }
-
-                        if (task.Enabled)
-                        {                            
-
-                            await Task.Factory.StartNew(() =>
-                            {
-                                var start = System.Environment.TickCount;
-                                task.runTask?.Invoke(task.Status);
-                                var stop = System.Environment.TickCount;
-
-                                double elapsedTimeSeconds = (stop - start) / 1000;
-                                task.LastExecutionDuration = string.Format("{0:#,##0.00}", elapsedTimeSeconds);
-
-                            }).ContinueWith((antecedant) =>
-                            {
-
-                            });
-
-                            //await Task.Run(task.runAction);
-                            tasksCollection.Add(Task.Run( () =>
-                            {
-                                var start = System.Environment.TickCount;
-                                task.runTask?.Invoke(task.Status);
-                                var stop = System.Environment.TickCount;
-
-                                double elapsedTimeSeconds = (stop - start) / 1000;
-                                task.LastExecutionDuration = string.Format("{0:#,##0.00}",elapsedTimeSeconds);
-                            }
-                            ));                           
-                           
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        //ToDo: change method of logging as this may also cause an exception
-                        throw new DevOpsTaskException(currentTask, ex.Message);
-                    }
-                    finally
-                    {
-                    }
-                }
-
-                Task t = Task.WhenAll(tasksCollection);
-                try
-                {
-                    t.Wait();
-                }
-                catch {
-
-                }
-
-                if (t.Status == System.Threading.Tasks.TaskStatus.RanToCompletion)
-                {
-                    foreach (var task in taskSet)
-                    {
-                        if (task.Enabled && task.Status == DevOps.DevOpsTaskStatus.Completed)
-                        {
-                            BroadcastStatus(String.Format("Completed {0}", task.Description));
-                            task.Enabled = false;
-                        }
-                    }
-                }
-                else if (t.Status == System.Threading.Tasks.TaskStatus.Faulted)
-                {
-
-                }
-
-            }          
-
-        }
-
-        public void RaiseException(DevOpsTask task, Exception ex = null)
+        /// <summary>
+        /// Raises an exception given a DevOpsTask and Exception instance
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="ex"></param>
+        private void RaiseException(DevOpsTask task, Exception ex = null)
         {
             var devOpsEx = new DevOpsTaskException(task, ex.Message);
 
             throw devOpsEx;
         }
 
-        public void RaiseException(Exception ex)
+        /// <summary>
+        /// Raises an exception given an Exception instance
+        /// </summary>
+        /// <param name="ex"></param>
+        private void RaiseException(Exception ex)
         {
             var devOpsEx = new DevOpsTaskException(ex.Message);
 
             throw devOpsEx;
         }
 
-        public ICollection<DevOpsTask> GetTasksFromFile(string filePath)
+        private ICollection<DevOpsTask> GetTasksFromFile(string filePath)
         {
             try
             {
@@ -225,7 +287,12 @@ namespace AssemblySoft.DevOps
             return null;
         }
 
-        public void SerializeTasksToFile(IEnumerable<DevOpsTask> tasks, string filePath)
+        /// <summary>
+        /// Serializes the tasks to a file
+        /// </summary>
+        /// <param name="tasks"></param>
+        /// <param name="filePath"></param>
+        private void SerializeTasksToFile(IEnumerable<DevOpsTask> tasks, string filePath)
         {
             try
             {
