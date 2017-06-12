@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<ArrayOfDevOpsTask xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <DevOpsTask>
+    <Status>Idle</Status>
+    <Id>79548566-e223-49ef-8296-d06a4a5dd48b</Id>    
+    <Assembly>AssemblySoft.DevOps.Task.Example.dll</Assembly>
+    <Namespace>AssemblySoft.DevOps.Task.Example.DelayTask</Namespace>
+    <Method>GoToSleepForTenSeconds</Method>
+    <Enabled>true</Enabled>
+    <Order>0</Order>
+    <Description>Go to sleep for ten seconds</Description>
+  </DevOpsTask>
+  <DevOpsTask>
+    <Status>Idle</Status>
+    <Id>6cc48a3b-c0f9-40a5-a795-1bd1589d97fd</Id>
+    <Assembly>AssemblySoft.DevOps.Task.Example.dll</Assembly>
+    <Namespace>AssemblySoft.DevOps.Task.Example.BuildTask</Namespace>
+    <Method>Build</Method>
+    <Enabled>true</Enabled>
+    <Order>1</Order>
+    <Description>Run build</Description>
+  </DevOpsTask>
+  <DevOpsTask>
+    <Status>Idle</Status>
+    <Id>79548566-e223-49ef-8296-d06a4a5dd48b</Id>
+    <Assembly>AssemblySoft.DevOps.Task.Example.dll</Assembly>
+    <Namespace>AssemblySoft.DevOps.Task.Example.DelayTask</Namespace>
+    <Method>GoToSleepForTenSeconds</Method>
+    <Enabled>true</Enabled>
+    <Order>1</Order>
+    <Description>Create setup scripts</Description>
+  </DevOpsTask>
+  <DevOpsTask>
+    <Status>Idle</Status>
+    <Id>6cc48a3b-c0f9-40a5-a795-1bd1589d97fd</Id>
+    <Assembly>AssemblySoft.DevOps.Task.Example.dll</Assembly>
+    <Namespace>AssemblySoft.DevOps.Task.Example.DelayTask</Namespace>
+    <Method>GoToSleepForTenSeconds</Method>
+    <Enabled>true</Enabled>
+    <Order>2</Order>
+    <Description>Copy directory</Description>
+  </DevOpsTask>
+</ArrayOfDevOpsTask>
