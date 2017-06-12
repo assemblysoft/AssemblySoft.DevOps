@@ -259,3 +259,4 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/AssemblySoft.DevOps.TestClient/data/saved_assembly_build.tasks.txt
