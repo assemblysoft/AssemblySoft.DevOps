@@ -23,8 +23,9 @@ call %NuGet% restore AssemblySoft.DevOps\packages.config -OutputDirectory %cd%\p
 echo building solution
 "%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" AssemblySoft.DevOps.sln /p:Configuration="%config%" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
 
-echo creating nuget package
+echo creating nuget packages
 mkdir Build
 call %nuget% pack "AssemblySoft.DevOps\AssemblySoft.DevOps.csproj" -IncludeReferencedProjects -verbosity detailed -o Build -p Configuration=%config% %version%
+call %nuget% pack "AssemblySoft.DevOps.Common\AssemblySoft.DevOps.Common.csproj" -IncludeReferencedProjects -verbosity detailed -o Build -p Configuration=%config% %version%
 
 echo complete custom build
