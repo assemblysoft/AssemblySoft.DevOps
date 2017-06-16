@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>AssemblySoft.DevOps</id>
+    <version>1.0.0.3</version>
+    <title>AssemblySoft.DevOps</title>
+    <authors>Carl Randall</authors>
+    <owners>AssemblySoft</owners>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://www.assemblysoft.com/packages</projectUrl>
+    <iconUrl>https://www.assemblysoft.com/favicon.ico</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>software DEVelopment and software OPerationS library which includes a task runner capable of managing configurable light weight tasks.</description>
+    <summary>Simple DevOps library which enables independent development of tasks.</summary>
+    <tags>Task Runner, DevOps</tags>  
+  </metadata>
+</package>
