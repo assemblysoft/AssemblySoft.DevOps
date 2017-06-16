@@ -11,10 +11,14 @@ set version=
 if not "%PackageVersion%" == "" (
    set version=-Version %PackageVersion%
 )
+
 set nuget=
 if "%nuget%" == "" (
 	set nuget=nuget
 )
+
+REM Package restore
+call %NuGet% restore AssemblySoft.DevOps\packages.config -OutputDirectory %cd%\packages -NonInteractive
 
 echo building solution
 "%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" AssemblySoft.DevOps.sln /p:Configuration="%config%" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
