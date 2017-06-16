@@ -21,6 +21,6 @@ echo building solution
 
 echo creating nuget package
 mkdir Build
-call %nuget% pack "AssemblySoft.AssemblySoft.DevOps\AssemblySoft.AssemblySoft.DevOps.csproj" -IncludeReferencedProjects -verbosity detailed -o Build -p Configuration=%config% %version%
+call %nuget% pack "AssemblySoft.AssemblySoft.DevOps\AssemblySoft.DevOps.csproj" -IncludeReferencedProjects -verbosity detailed -o Build -p Configuration=%config% %version%
 
 echo complete custom build
