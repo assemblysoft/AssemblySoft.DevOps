@@ -4,8 +4,9 @@ software DEVelopment and software OPerationS  library which includes a task runn
 Simple DevOps library which enables independent development of tasks
 
 
+## Downloads
 NuGet package via NuGet: AssemblySoft.DevOps
 
-License
+## License
 
 AssemblySoft.DevOps is distributed under the MIT License.
