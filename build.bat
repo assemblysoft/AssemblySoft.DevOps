@@ -17,7 +17,7 @@ if "%nuget%" == "" (
 )
 
 echo building solution
-"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" AssemblySoft.AssemblySoft.DevOps.sln /p:Configuration="%config%" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
+"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" AssemblySoft.DevOps.sln /p:Configuration="%config%" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
 
 echo creating nuget package
 mkdir Build
