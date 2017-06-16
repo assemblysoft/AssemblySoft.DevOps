@@ -8,4 +8,4 @@ NuGet package via NuGet: AssemblySoft.DevOps
 
 License
 
-AssemblySoft.FileClient is distributed under the MIT License.
+AssemblySoft.DevOps is distributed under the MIT License.
