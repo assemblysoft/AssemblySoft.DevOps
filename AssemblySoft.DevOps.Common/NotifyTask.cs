@@ -8,8 +8,12 @@ namespace AssemblySoft.DevOps.Common
     /// </summary>
     public abstract class NotifyTask
     {
-        public event EventHandler<NotifyTaskOutputEventArgs> NotifyTaskOutputData;              
+        public event EventHandler<NotifyTaskOutputEventArgs> NotifyTaskOutputData;
 
+        public NotifyTask()
+        {
+
+        }
 
         public void RaiseOutputEvent(string message)
         {
