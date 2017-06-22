@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\AssemblySoft.DevOps.TestClient\tasks\</OutputPath>
+    <OutputPath>..\..\..\..\tmp\automation\data\build\tasks\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AssemblySoft.ProcessRunner, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AssemblySoft.ProcessRunner.1.0.0.1\lib\net461\AssemblySoft.ProcessRunner.dll</HintPath>
+      <HintPath>..\packages\AssemblySoft.ProcessRunner.1.0.0.2-CI00003\lib\net40\AssemblySoft.ProcessRunner.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />

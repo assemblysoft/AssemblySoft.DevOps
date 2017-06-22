@@ -32,6 +32,9 @@
             this.listBox_status = new System.Windows.Forms.ListBox();
             this.labelTaskStatus = new System.Windows.Forms.Label();
             this.labelConcurrentInstances = new System.Windows.Forms.Label();
+            this.labelStatus = new System.Windows.Forms.Label();
+            this.labelStatusResult = new System.Windows.Forms.Label();
+            this.textBoxStatus = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // button_Start_Tasks
@@ -69,11 +72,42 @@
             this.labelConcurrentInstances.Size = new System.Drawing.Size(0, 13);
             this.labelConcurrentInstances.TabIndex = 5;
             // 
+            // labelStatus
+            // 
+            this.labelStatus.AutoSize = true;
+            this.labelStatus.Location = new System.Drawing.Point(526, 44);
+            this.labelStatus.Name = "labelStatus";
+            this.labelStatus.Size = new System.Drawing.Size(37, 13);
+            this.labelStatus.TabIndex = 6;
+            this.labelStatus.Text = "Status";
+            // 
+            // labelStatusResult
+            // 
+            this.labelStatusResult.AutoSize = true;
+            this.labelStatusResult.Location = new System.Drawing.Point(610, 44);
+            this.labelStatusResult.Name = "labelStatusResult";
+            this.labelStatusResult.Size = new System.Drawing.Size(24, 13);
+            this.labelStatusResult.TabIndex = 7;
+            this.labelStatusResult.Text = "Idle";
+            // 
+            // textBoxStatus
+            // 
+            this.textBoxStatus.Location = new System.Drawing.Point(12, 257);
+            this.textBoxStatus.Multiline = true;
+            this.textBoxStatus.Name = "textBoxStatus";
+            this.textBoxStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textBoxStatus.Size = new System.Drawing.Size(948, 152);
+            this.textBoxStatus.TabIndex = 8;
+            this.textBoxStatus.VisibleChanged += new System.EventHandler(this.textBoxStatus_VisibleChanged);
+            // 
             // ManualTestDashboardForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(972, 351);
+            this.ClientSize = new System.Drawing.Size(972, 434);
+            this.Controls.Add(this.textBoxStatus);
+            this.Controls.Add(this.labelStatusResult);
+            this.Controls.Add(this.labelStatus);
             this.Controls.Add(this.labelConcurrentInstances);
             this.Controls.Add(this.labelTaskStatus);
             this.Controls.Add(this.listBox_status);
@@ -91,5 +125,8 @@
         private System.Windows.Forms.ListBox listBox_status;
         private System.Windows.Forms.Label labelTaskStatus;
         private System.Windows.Forms.Label labelConcurrentInstances;
+        private System.Windows.Forms.Label labelStatus;
+        private System.Windows.Forms.Label labelStatusResult;
+        private System.Windows.Forms.TextBox textBoxStatus;
     }
 }

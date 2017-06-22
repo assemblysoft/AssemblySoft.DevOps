@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NotifyTask.cs" />
     <Compile Include="DevOpsTask.cs" />
     <Compile Include="IDevOpsTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

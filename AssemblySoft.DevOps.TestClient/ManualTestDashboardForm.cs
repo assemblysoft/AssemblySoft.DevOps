@@ -28,12 +28,14 @@ namespace AssemblySoft.DevOps.TestClient
         private void button_Start_Tasks_Click(object sender, EventArgs e)
         {
             try
-            {                
-                //button_Start_Tasks.Enabled = false;
+            {
+                //button_Start_Tasks.Enabled = false; //uncomment to prevent multiple instances
                 Cursor = Cursors.WaitCursor;
                 AddStatus("Start");
+                labelStatusResult.Text = "Running";
                 _counter++;
                 labelConcurrentInstances.Text = _counter.ToString();
+                textBoxStatus.Clear();
                 
                 Task t1 = new Task(() =>
                 {
@@ -49,11 +51,12 @@ namespace AssemblySoft.DevOps.TestClient
                     if (_counter == 0)
                     {
                         Cursor = Cursors.Arrow;
+                        labelStatusResult.Text = "Idle";
                     }
 
-                    //button_Start_Tasks.Enabled = true;
-                    
-                },TaskScheduler.FromCurrentSynchronizationContext());           
+                    //button_Start_Tasks.Enabled = true; //uncomment to prevent multiple instances
+
+                }, TaskScheduler.FromCurrentSynchronizationContext());           
                 
                 t1.Start();
 
@@ -77,6 +80,11 @@ namespace AssemblySoft.DevOps.TestClient
         delegate void AddStatusCallback(string text);
         private void AddStatus(string result)
         {
+            if(string.IsNullOrEmpty(result))
+            {
+                return;
+            }
+
             // InvokeRequired required compares the thread ID of the
             // calling thread to the thread ID of the creating thread.
             // If these threads are different, it returns true.
@@ -88,6 +96,7 @@ namespace AssemblySoft.DevOps.TestClient
             else
             {
                 listBox_status.Items.Add(result);
+                textBoxStatus.AppendLine(result);                
             }            
         }
 
@@ -102,8 +111,15 @@ namespace AssemblySoft.DevOps.TestClient
             {
                 AddStatus(string.Format("Failed with error {0}", e.Message));
             }
-        }    
-        
+        }        
 
+        private void textBoxStatus_VisibleChanged(object sender, EventArgs e)
+        {
+            if (textBoxStatus.Visible)
+            {
+                textBoxStatus.SelectionStart = textBoxStatus.TextLength;
+                textBoxStatus.ScrollToCaret();
+            }
+        }
     }
 }

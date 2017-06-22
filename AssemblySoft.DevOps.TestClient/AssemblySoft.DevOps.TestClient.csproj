@@ -57,6 +57,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WinFormExtensions.cs" />
     <EmbeddedResource Include="ManualTestDashboardForm.resx">
       <DependentUpon>ManualTestDashboardForm.cs</DependentUpon>
     </EmbeddedResource>

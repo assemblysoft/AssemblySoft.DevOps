@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using AssemblySoft.Serialization;
-
+using AssemblySoft.DevOps.Common;
 
 namespace AssemblySoft.DevOps
 {
@@ -236,6 +236,15 @@ namespace AssemblySoft.DevOps
                 if (instance == null)
                 {
                     throw new DevOpsTaskException("Unable to create instance of type");
+                }
+
+                if(instance is NotifyTask)
+                {
+                    var notifyTask = instance as NotifyTask;
+                    notifyTask.NotifyTaskOutputData += (o, e) =>
+                      {
+                          BroadcastStatus(e.Message);
+                      };
                 }
 
                 Func<Task<DevOpsTaskStatus>> func = (Func<Task<DevOpsTaskStatus>>)Delegate.CreateDelegate(typeof(Func<Task<DevOpsTaskStatus>>), instance, methodInfo);
