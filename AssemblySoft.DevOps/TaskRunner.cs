@@ -263,7 +263,10 @@ namespace AssemblySoft.DevOps
                     var notifyTask = instance as NotifyTask;
                     notifyTask.NotifyTaskOutputData += (o, e) =>
                       {
-                          BroadcastStatus(e.Message);
+                          if (!string.IsNullOrEmpty(e.Message))
+                          {
+                              BroadcastStatus(e.Message);
+                          }
                       };
                 }
 
