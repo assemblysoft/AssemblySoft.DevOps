@@ -53,6 +53,7 @@ namespace AssemblySoft.DevOps
         /// <param name="devOpsTasks"></param>
         public void Run(IEnumerable<DevOpsTask> devOpsTasks)
         {
+            string result = "undefined";
             try
             {
                 var funcCount = BindFuncs(devOpsTasks.Where(t => t.Enabled == true)); //filter out tasks marked as disabled
@@ -148,6 +149,8 @@ namespace AssemblySoft.DevOps
 
                 }
 
+                result = t.Status.ToString();
+
                 if (t.Status == System.Threading.Tasks.TaskStatus.RanToCompletion)
                 {
                     BroadcastStatus(String.Format("All tasks in the set completed {0} ({1})", correlationId, currentOrder));
@@ -169,6 +172,8 @@ namespace AssemblySoft.DevOps
             }
 
             BroadcastStatus(String.Format("Stopped processing tasks {0}", DateTime.UtcNow));
+
+            RaiseTasksCompletedEvent(result);
         }
 
         /// <summary>
@@ -194,6 +199,21 @@ namespace AssemblySoft.DevOps
             };
 
             TaskStatus?.Invoke(statusArgs);
+        }
+
+        public event TaskStatusEventHandler TasksCompleted;
+        /// <summary>
+        /// Raises a task status event
+        /// </summary>
+        /// <param name="status"></param>
+        private void RaiseTasksCompletedEvent(string status)
+        {
+            TaskStatusEventArg statusArgs = new TaskStatusEventArg
+            {
+                Status = status
+            };
+
+            TasksCompleted?.Invoke(statusArgs);
         }
 
         /// <summary>

@@ -17,14 +17,15 @@ namespace AssemblySoft.DevOps.TestClient
             InitializeComponent();
 
             _taskRunner = new TaskRunner();
-            _taskRunner.TaskStatus += _taskRunner_TaskStatus;
-        }
+            _taskRunner.TaskStatus += (e) => AddStatus(e.Status);
+            _taskRunner.TasksCompleted+= (e)=> AddStatus(e.Status);
+        }        
 
-        private void _taskRunner_TaskStatus(TaskRunner.TaskStatusEventArg e)
-        {
-            AddStatus(e.Status);
-        }
-
+        /// <summary>
+        /// Start Tasks click event handler
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button_Start_Tasks_Click(object sender, EventArgs e)
         {
             try
