@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
@@ -6,9 +6,11 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
 
 using AssemblySoft.Serialization;
 using AssemblySoft.DevOps.Common;
+
 
 namespace AssemblySoft.DevOps
 {
@@ -27,7 +29,7 @@ namespace AssemblySoft.DevOps
         /// Run collection of Dev Ops Tasks given a file path
         /// </summary>
         /// <param name="filePath">File path to load task collection from</param>
-        public void Run(string filePath)
+        public DevOpsTaskStatus Run(CancellationToken ct, string filePath)
         {
             ICollection<DevOpsTask> tasks;
             try
@@ -44,16 +46,17 @@ namespace AssemblySoft.DevOps
                 throw new DevOpsTaskException("Unable to load tasks from file path", ex);
             }
 
-            Run(tasks);
+            return Run(ct,tasks);
         }
 
         /// <summary>
         /// Run collection of Dev Ops Tasks
         /// </summary>
         /// <param name="devOpsTasks"></param>
-        public void Run(IEnumerable<DevOpsTask> devOpsTasks)
+        public DevOpsTaskStatus Run(CancellationToken ct, IEnumerable<DevOpsTask> devOpsTasks)
         {
-            string result = "undefined";
+            DevOpsTaskStatus result = DevOpsTaskStatus.Faulted;
+            
             try
             {
                 var funcCount = BindFuncs(devOpsTasks.Where(t => t.Enabled == true)); //filter out tasks marked as disabled
@@ -84,6 +87,11 @@ namespace AssemblySoft.DevOps
 
                 foreach (var devOpsTask in devOpsTaskSet)
                 {
+                    if(ct.IsCancellationRequested)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                    }
+
                     currentDevOpsTask = devOpsTask;
                     currentOrder = devOpsTask.Order;
 
@@ -98,21 +106,38 @@ namespace AssemblySoft.DevOps
 
                         BroadcastStatus(String.Format("{0} {1} {2} ({3}) {4}", devOpsTask.Status, devOpsTask.Description, correlationId, devOpsTask.Order, DateTime.UtcNow));
 
-                        List<Task> tasks = new List<Task>();
+                        List<Task<DevOpsTaskStatus>> tasks = new List<Task<DevOpsTaskStatus>>();
                         if (devOpsTask.Enabled)
-                        {                            
-                            Task task = new Task(() =>
+                        {
+                            Task<DevOpsTaskStatus> task = new Task<DevOpsTaskStatus>(() =>
                             {
                                 BroadcastStatus(String.Format("Task Id: {0} Thread Id {1} {2} ({3}) {4}", Task.CurrentId, Thread.CurrentThread.ManagedThreadId, correlationId, devOpsTask.Order, devOpsTask.Description));
 
-                                var start = System.Environment.TickCount;
+                                var start = Environment.TickCount;
 
                                 if (devOpsTask.func != null)
                                 {
-                                    devOpsTask.Status = devOpsTask.func.Invoke().Result;
+                                    try
+                                    {
+                                        devOpsTask.Status = devOpsTask.func.Invoke().Result; //implicit wait
+                                    }
+                                    catch(AggregateException ae)
+                                    {//... exception occured within the custom task 
+                                        HandleException(ae);
+
+                                        //rethrow with devops task details
+                                        throw new DevOpsTaskException(devOpsTask, string.Format("Error received while running task: {0}",devOpsTask.Description));
+                                    }
+
+                                    if(devOpsTask.Status != DevOpsTaskStatus.Completed)
+                                    {//...custom task did not return completed status
+
+                                        //throw with devops task details
+                                        throw new DevOpsTaskException(devOpsTask, string.Format("Error task {0} did not return a completed status",devOpsTask.Description));
+                                    }
                                 }
 
-                                var stop = System.Environment.TickCount;
+                                var stop = Environment.TickCount;
                                 double elapsedTimeSeconds = (stop - start) / 1000;
                                 devOpsTask.LastExecutionDuration = string.Format("{0:#,##0.00}", elapsedTimeSeconds);
 
@@ -122,20 +147,21 @@ namespace AssemblySoft.DevOps
                                     //task.Enabled = false; //updates to disabled
                                 }
 
+                                return devOpsTask.Status;
+
                             });
 
                             tasksCollection.Add(task);
                             task.Start();
                         }
-                    }
+                        
+                    }                                   
                     catch (Exception ex)
                     {
-                        //ToDo: change method of logging as this may also cause an exception
-                        throw new DevOpsTaskException(currentDevOpsTask, ex.Message);
+                        HandleException(ex);
+                        //ToDo: change method of logging as this may also cause an exception                                            
                     }
-                    finally
-                    {
-                    }
+                    
                 }
 
 
@@ -144,16 +170,19 @@ namespace AssemblySoft.DevOps
                 {
                     t.Wait();
                 }
-                catch
+                catch(AggregateException ae)
                 {
-
+                    HandleException(ae);
                 }
-
-                result = t.Status.ToString();
+                catch(Exception e)
+                {
+                    HandleException(e);
+                }               
 
                 if (t.Status == System.Threading.Tasks.TaskStatus.RanToCompletion)
                 {
                     BroadcastStatus(String.Format("All tasks in the set completed {0} ({1})", correlationId, currentOrder));
+                    result = DevOpsTaskStatus.Completed;
                 }
                 else
                 {
@@ -167,13 +196,59 @@ namespace AssemblySoft.DevOps
                             BroadcastStatus(String.Format("{0} {1} {2} ({3}) {4}", task.Status, task.Description, correlationId, task.Order, task.LastExecutionDuration));
                         }
                     }
+
+                    result = DevOpsTaskStatus.Faulted;
+
+                    break;
+                    
                 }
 
-            }
-
+            }            
+            
             BroadcastStatus(String.Format("Stopped processing tasks {0}", DateTime.UtcNow));
 
-            RaiseTasksCompletedEvent(result);
+            RaiseTasksCompletedEvent(result.ToString());
+
+            #region Test Raise Exception
+            //used to test exception being raised from outside the task library
+            /*
+            throw new DevOpsTaskException("this is bad");
+            */
+
+            #endregion
+
+            return result; 
+        }
+
+        /// <summary>
+        /// Central handler for exceptions
+        /// </summary>
+        /// <param name="e"></param>
+        private void HandleException(Exception e)
+        {
+            if(e is AggregateException)
+            {
+                StringBuilder exBuilder = new StringBuilder();
+                var aggEx = e as AggregateException;
+                aggEx = aggEx.Flatten();
+
+                foreach (Exception ex in aggEx.InnerExceptions)
+                {
+                    exBuilder.AppendLine(ex.Message); //.AppendLine(ex.StackTrace);
+                }
+
+                BroadcastStatus(string.Format("Ae Error: {0}",exBuilder.ToString()));
+
+            }
+            else if (e is DevOpsTaskException)
+            {
+                var devOpsEx = e as DevOpsTaskException;
+                BroadcastStatus(string.Format("{0} failed with error {1}", devOpsEx.Task != null ? devOpsEx.Task.Description : string.Empty, devOpsEx.Message));
+            }
+            else
+            {
+                BroadcastStatus(string.Format("Failed with error {0}", e.Message));
+            }
         }
 
         /// <summary>
