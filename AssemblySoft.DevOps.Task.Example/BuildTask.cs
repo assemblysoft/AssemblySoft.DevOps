@@ -1,4 +1,4 @@
-﻿using AssemblySoft.DevOps.Common;
+using AssemblySoft.DevOps.Common;
 using System;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -33,6 +33,14 @@ namespace AssemblySoft.DevOps.Task.Example
             {
                 //kick off the work
                 var result = procRunner.RunProcess(ConfigurationManager.AppSettings["buildProc"], "build.bat", "3.1.8", useShellExecute: false, createNoWindow: false);
+                
+                
+                #region Test Raise Exception
+                //used to test throwing an exception from within a custom task 
+                
+                //throw new InvalidOperationException("ooops!");
+
+                #endregion
             }
             catch(Exception e)
             {
@@ -40,7 +48,7 @@ namespace AssemblySoft.DevOps.Task.Example
                 return DevOpsTaskStatus.Faulted;
             }
 
-            //return a success
+            
             return DevOpsTaskStatus.Completed;
         }
 
