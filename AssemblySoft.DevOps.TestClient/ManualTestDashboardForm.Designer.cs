@@ -1,4 +1,4 @@
-﻿namespace AssemblySoft.DevOps.TestClient
+namespace AssemblySoft.DevOps.TestClient
 {
     partial class ManualTestDashboardForm
     {
@@ -35,11 +35,13 @@
             this.labelStatus = new System.Windows.Forms.Label();
             this.labelStatusResult = new System.Windows.Forms.Label();
             this.textBoxStatus = new System.Windows.Forms.TextBox();
+            this.button_ClearOutput = new System.Windows.Forms.Button();
+            this.buttonCancelTasks = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button_Start_Tasks
             // 
-            this.button_Start_Tasks.Location = new System.Drawing.Point(12, 12);
+            this.button_Start_Tasks.Location = new System.Drawing.Point(7, 8);
             this.button_Start_Tasks.Name = "button_Start_Tasks";
             this.button_Start_Tasks.Size = new System.Drawing.Size(128, 45);
             this.button_Start_Tasks.TabIndex = 0;
@@ -100,11 +102,35 @@
             this.textBoxStatus.TabIndex = 8;
             this.textBoxStatus.VisibleChanged += new System.EventHandler(this.textBoxStatus_VisibleChanged);
             // 
+            // button_ClearOutput
+            // 
+            this.button_ClearOutput.Location = new System.Drawing.Point(832, 12);
+            this.button_ClearOutput.Name = "button_ClearOutput";
+            this.button_ClearOutput.Size = new System.Drawing.Size(128, 45);
+            this.button_ClearOutput.TabIndex = 9;
+            this.button_ClearOutput.Text = "Clear Output";
+            this.button_ClearOutput.UseVisualStyleBackColor = true;
+            this.button_ClearOutput.Click += new System.EventHandler(this.button_ClearOutput_Click);
+            // 
+            // buttonCancelTasks
+            // 
+            this.buttonCancelTasks.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.buttonCancelTasks.Enabled = false;
+            this.buttonCancelTasks.Location = new System.Drawing.Point(676, 12);
+            this.buttonCancelTasks.Name = "buttonCancelTasks";
+            this.buttonCancelTasks.Size = new System.Drawing.Size(128, 45);
+            this.buttonCancelTasks.TabIndex = 10;
+            this.buttonCancelTasks.Text = "Cancel Running Tasks";
+            this.buttonCancelTasks.UseVisualStyleBackColor = true;
+            this.buttonCancelTasks.Click += new System.EventHandler(this.buttonCancelTasks_Click);
+            // 
             // ManualTestDashboardForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(972, 434);
+            this.Controls.Add(this.buttonCancelTasks);
+            this.Controls.Add(this.button_ClearOutput);
             this.Controls.Add(this.textBoxStatus);
             this.Controls.Add(this.labelStatusResult);
             this.Controls.Add(this.labelStatus);
@@ -128,5 +154,7 @@
         private System.Windows.Forms.Label labelStatus;
         private System.Windows.Forms.Label labelStatusResult;
         private System.Windows.Forms.TextBox textBoxStatus;
+        private System.Windows.Forms.Button button_ClearOutput;
+        private System.Windows.Forms.Button buttonCancelTasks;
     }
 }
