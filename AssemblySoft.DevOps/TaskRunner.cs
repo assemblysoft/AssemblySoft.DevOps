@@ -18,12 +18,19 @@ namespace AssemblySoft.DevOps
     /// Rsponsible for running a series of tasks
     /// </summary>
     public partial class TaskRunner
-    {
-        public TaskRunner()
+    {      
+        
+        /// <summary>
+        /// Constructor accepting the path where the task runner is executing
+        /// </summary>
+        /// <param name="taskRunnerPath"></param>
+        public TaskRunner(string taskRunnerPath)
         {
+            _taskRunnerPath = taskRunnerPath;
         }
         
         IEnumerable<DevOpsTask> _devOpsTasks;
+        string _taskRunnerPath;
 
         /// <summary>
         /// Run collection of Dev Ops Tasks given a file path
@@ -38,7 +45,7 @@ namespace AssemblySoft.DevOps
 
                 if (tasks == null || tasks.Count <= 0)
                 {
-                    throw new DevOpsTaskException("Unable to load tasks from file path");
+                    throw new DevOpsTaskException("No tasks exist at the given file path");
                 }
             }
             catch (Exception ex)
@@ -119,7 +126,7 @@ namespace AssemblySoft.DevOps
                                 {
                                     try
                                     {
-                                        devOpsTask.Status = devOpsTask.func.Invoke().Result; //implicit wait
+                                        devOpsTask.Status = devOpsTask.func.Invoke(_taskRunnerPath).Result; //implicit wait
                                     }
                                     catch(AggregateException ae)
                                     {//... exception occured within the custom task 
@@ -315,15 +322,16 @@ namespace AssemblySoft.DevOps
         private int BindFuncs(IEnumerable<DevOpsTask> tasks)
         {
             var funcs = 0;
-            var rootPath = ConfigurationManager.AppSettings["buildTasksPath"];
-            if (string.IsNullOrEmpty(rootPath))
+            var tasksPath = Path.Combine(_taskRunnerPath, Constants.TASKS);                            
+
+            if (string.IsNullOrEmpty(tasksPath))
             {
-                throw new DevOpsTaskException("Unable to load Build tasks root path [buildTasksPath]");
+                throw new DevOpsTaskException(string.Format("Unable to load Build tasks root path: {0}",tasksPath));
             }
 
             foreach (var item in tasks)
             {
-                var path = Path.Combine(rootPath, item.Assembly);
+                var path = Path.Combine(tasksPath, item.Assembly);
                 Assembly asm = Assembly.LoadFrom(path);
                 Type t = asm.GetType(item.Namespace);
                 var methodInfo = t.GetMethod(item.Method);
@@ -345,7 +353,7 @@ namespace AssemblySoft.DevOps
                       };
                 }
 
-                Func<Task<DevOpsTaskStatus>> func = (Func<Task<DevOpsTaskStatus>>)Delegate.CreateDelegate(typeof(Func<Task<DevOpsTaskStatus>>), instance, methodInfo);
+                Func<string,Task<DevOpsTaskStatus>> func = (Func<string,Task<DevOpsTaskStatus>>)Delegate.CreateDelegate(typeof(Func<string,Task<DevOpsTaskStatus>>), instance, methodInfo);
                 item.func = func;
                 funcs++;
             }
