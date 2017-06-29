@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
@@ -27,7 +27,7 @@ namespace AssemblySoft.DevOps
 
         [NonSerialized]
         [XmlIgnore]
-        public Func<Task<DevOpsTaskStatus>> func;
+        public Func<string,Task<DevOpsTaskStatus>> func;
 
         [NonSerialized]
         [XmlIgnore]
