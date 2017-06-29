@@ -1,6 +1,7 @@
 using AssemblySoft.DevOps.Common;
 using System;
 using System.Configuration;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace AssemblySoft.DevOps.Task.Example
@@ -21,8 +22,11 @@ namespace AssemblySoft.DevOps.Task.Example
         /// <remarks>
         /// Uses the abstract base class to send notifications back to the client/s
         /// </remarks>
-        public async Task<DevOpsTaskStatus> RunBuildScript()
+        public async Task<DevOpsTaskStatus> RunBuildScript(string rootPath)
         {
+            const string buildScript = "build.bat";
+            var args = "3.1.8";
+
             var procRunner = new ProcessRunner.ProcessRunner(); //the thing we are consuming emits some useful information
             procRunner.ProcessOutputData += (s,e) => //subscribe to it's notification event
             {
@@ -32,9 +36,8 @@ namespace AssemblySoft.DevOps.Task.Example
             try
             {
                 //kick off the work
-                var result = procRunner.RunProcess(ConfigurationManager.AppSettings["buildProc"], "build.bat", "3.1.8", useShellExecute: false, createNoWindow: false);
-                
-                
+                var result = procRunner.RunProcess(Path.Combine(rootPath,Constants.SCRIPTS), buildScript, args, useShellExecute: false, createNoWindow: false);
+                                
                 #region Test Raise Exception
                 //used to test throwing an exception from within a custom task 
                 
