@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,33 +10,16 @@ using System.Windows.Forms;
 namespace AssemblySoft.DevOps.TestClient
 {
     public partial class ManualTestDashboardForm : Form
-    {
-        TaskRunner _taskRunner;
+    {       
+        //destination root path for running the tasks
+        string _tasksDestinationPath = ConfigurationManager.AppSettings["tasksRunnerRootPath"];
         int _counter;
         CancellationTokenSource _cts = new CancellationTokenSource();
 
         public ManualTestDashboardForm()
         {
-            InitializeComponent();
-
-            _taskRunner = new TaskRunner();
-            _taskRunner.TaskStatus += (e) => AddStatus(e.Status);
-            _taskRunner.TasksCompleted += (e) =>
-             {
-                 if (!string.IsNullOrEmpty(e.Status))
-                 {
-                     if (e.Status != DevOpsTaskStatus.Completed.ToString())
-                     {
-                         AddStatus("Task run was aborted!");
-                         return;
-                     }
-                 }
-                 else
-                 {
-                     AddStatus(e.Status);
-                 }
-             };
-        }        
+            InitializeComponent();            
+        }
 
         /// <summary>
         /// Start Tasks click event handler
@@ -43,7 +27,7 @@ namespace AssemblySoft.DevOps.TestClient
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button_Start_Tasks_Click(object sender, EventArgs e)
-        {
+        {            
             try
             {
                 //button_Start_Tasks.Enabled = false; //uncomment to prevent multiple instances
@@ -53,16 +37,65 @@ namespace AssemblySoft.DevOps.TestClient
                 _counter++;
                 buttonCancelTasks.Enabled = true;
                 labelConcurrentInstances.Text = _counter.ToString();
-                
+
                 var token = _cts.Token;
 
-                Task<DevOpsTaskStatus> t1 = new Task<DevOpsTaskStatus>(() =>
+                //root path for the source task artifacts
+                var tasksSourcePath = ConfigurationManager.AppSettings["tasksSourcePath"];                                
+
+                //create new directory for tasks to run
+                if (!Directory.Exists(_tasksDestinationPath))
                 {
-                    return _taskRunner.Run(token,ConfigurationManager.AppSettings["tasksPath"]);                    
-                },token);
-                
+                    Directory.CreateDirectory(_tasksDestinationPath);
+                }
+
+                int latestCount = GetNextBuildNumber(_tasksDestinationPath);               
+
+                var runPath = Path.Combine(_tasksDestinationPath, string.Format("{0}", latestCount));
+                Directory.CreateDirectory(runPath);
+
+                //generate basic log to identify task run
+                string path = Path.Combine(runPath, string.Format("{0}", "build.log"));
+                // This text is added only once to the file.
+                if (!File.Exists(path))
+                {
+                    // Create a file to write to.
+                    using (StreamWriter sw = File.CreateText(path))
+                    {
+                        sw.WriteLine(string.Format("{0} Ver: {1}", "Build Runner version", "2.1"));
+                        sw.WriteLine(string.Format("{0} {1}", DateTime.UtcNow, runPath));
+                    }
+                }
+
+                //copy build artifacts                
+                FileClient.FileClient.DirectoryCopy(tasksSourcePath, runPath, true);                
+                                
+                var taskRunner = new TaskRunner(runPath);
+                taskRunner.TaskStatus += (t) => AddStatus(t.Status);
+                taskRunner.TasksCompleted += (t) =>
+                {
+                    if (!string.IsNullOrEmpty(t.Status))
+                    {
+                        if (t.Status != DevOpsTaskStatus.Completed.ToString())
+                        {
+                            AddStatus("Task run was aborted!");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        AddStatus(t.Status);
+                    }
+                };
+
+                Task<DevOpsTaskStatus> t1 = new Task<DevOpsTaskStatus>(() =>
+                {                    
+                    return taskRunner.Run(token, Path.Combine(runPath, "build.tasks"));
+
+                }, token);
+
                 Task t2 = t1.ContinueWith((ante) =>
-                {            
+                {
 
                     AddStatus("Stopped");
 
@@ -79,7 +112,6 @@ namespace AssemblySoft.DevOps.TestClient
 
                     try
                     {
-
                         AddStatus(string.Format("Task runner returned {0}", ante.Result.ToString())); //harvest result, rethrow if necessary
                     }
                     catch (AggregateException ae)
@@ -88,31 +120,55 @@ namespace AssemblySoft.DevOps.TestClient
                     }
 
 
-                }, TaskScheduler.FromCurrentSynchronizationContext());           
-                
-                t1.Start();               
+                }, TaskScheduler.FromCurrentSynchronizationContext());
 
-                
+                t1.Start();
+
+
             }
             catch (DevOpsTaskException ex)
             {
                 HandleException(ex);
-            }            
+            }
+            catch (AggregateException ae)
+            {
+                HandleException(ae);
+            }
             catch (Exception ex)
             {
                 HandleException(ex);
             }
             finally
             {
-                var tasks = _taskRunner.GetDevOpsTaskWithState();
+                //var tasks = taskRunner.GetDevOpsTaskWithState();
                 // _taskRunner.SerializeTasksToFile(tasks, ConfigurationManager.AppSettings["tasksPath"]);
             }
+        }
+
+        private static int GetNextBuildNumber(string rootPath)
+        {
+            DirectoryInfo info = new DirectoryInfo(rootPath);
+            var directories = info.GetDirectories();
+            int latestCount = 0;
+            foreach (var dir in directories)
+            {
+                if (int.TryParse(dir.Name, out int res))
+                {
+                    if (res > latestCount)
+                    {
+                        latestCount = res;
+                    }
+                }
+
+            }
+            latestCount++;
+            return latestCount;
         }
 
         delegate void AddStatusCallback(string text);
         private void AddStatus(string result)
         {
-            if(string.IsNullOrEmpty(result))
+            if (string.IsNullOrEmpty(result))
             {
                 return;
             }
@@ -128,8 +184,8 @@ namespace AssemblySoft.DevOps.TestClient
             else
             {
                 listBox_status.Items.Add(result);
-                textBoxStatus.AppendLine(result);                
-            }            
+                textBoxStatus.AppendLine(result);
+            }
         }
 
         /// <summary>
@@ -171,9 +227,9 @@ namespace AssemblySoft.DevOps.TestClient
             {
                 AddStatus(string.Format("Failed with error {0}", e.Message));
                 labelStatusResult.Text = "Aborted";
-            }           
+            }
 
-        }        
+        }
 
         private void textBoxStatus_VisibleChanged(object sender, EventArgs e)
         {
@@ -193,7 +249,7 @@ namespace AssemblySoft.DevOps.TestClient
         private void buttonCancelTasks_Click(object sender, EventArgs e)
         {
             _cts.Cancel(); //cancel all instances
-            
+
             _cts = new CancellationTokenSource(); //create new instance for future tasks
         }
     }
