@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AssemblySoft.DevOps.Task.Example
@@ -13,7 +13,7 @@ namespace AssemblySoft.DevOps.Task.Example
         /// Sleep for ten seconds
         /// </summary>
         /// <returns></returns>
-        public async Task<DevOpsTaskStatus> GoToSleepForTenSeconds()
+        public async Task<DevOpsTaskStatus> GoToSleepForTenSeconds(string rootPath)
         {            
             //await Task.Delay(10000);
             Thread.Sleep(10000);
@@ -25,7 +25,7 @@ namespace AssemblySoft.DevOps.Task.Example
         /// Useful for simulating long running task, particularly around thread pool timeouts in a web context
         /// </summary>
         /// <returns></returns>
-        public async Task<DevOpsTaskStatus> GoToSleepForTenMinutes()
+        public async Task<DevOpsTaskStatus> GoToSleepForTenMinutes(string rootPath)
         {            
             Thread.Sleep(600000); //600,000 milliseconds
 
