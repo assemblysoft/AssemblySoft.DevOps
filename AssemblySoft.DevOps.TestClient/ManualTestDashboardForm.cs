@@ -10,9 +10,9 @@ using System.Windows.Forms;
 namespace AssemblySoft.DevOps.TestClient
 {
     public partial class ManualTestDashboardForm : Form
-    {       
-        //destination root path for running the tasks
-        string _tasksDestinationPath = ConfigurationManager.AppSettings["tasksRunnerRootPath"];
+    {     
+        
+        
         int _counter;
         CancellationTokenSource _cts = new CancellationTokenSource();
 
@@ -30,7 +30,7 @@ namespace AssemblySoft.DevOps.TestClient
         {            
             try
             {
-                //button_Start_Tasks.Enabled = false; //uncomment to prevent multiple instances
+                button_Start_Tasks.Enabled = false; //uncomment to prevent multiple instances
                 Cursor = Cursors.WaitCursor;
                 AddStatus("Start");
                 labelStatusResult.Text = "Running";
@@ -39,37 +39,8 @@ namespace AssemblySoft.DevOps.TestClient
                 labelConcurrentInstances.Text = _counter.ToString();
 
                 var token = _cts.Token;
+                string runPath = InitialiseBuildRun();
 
-                //root path for the source task artifacts
-                var tasksSourcePath = ConfigurationManager.AppSettings["tasksSourcePath"];                                
-
-                //create new directory for tasks to run
-                if (!Directory.Exists(_tasksDestinationPath))
-                {
-                    Directory.CreateDirectory(_tasksDestinationPath);
-                }
-
-                int latestCount = GetNextBuildNumber(_tasksDestinationPath);               
-
-                var runPath = Path.Combine(_tasksDestinationPath, string.Format("{0}", latestCount));
-                Directory.CreateDirectory(runPath);
-
-                //generate basic log to identify task run
-                string path = Path.Combine(runPath, string.Format("{0}", "build.log"));
-                // This text is added only once to the file.
-                if (!File.Exists(path))
-                {
-                    // Create a file to write to.
-                    using (StreamWriter sw = File.CreateText(path))
-                    {
-                        sw.WriteLine(string.Format("{0} Ver: {1}", "Build Runner version", "2.1"));
-                        sw.WriteLine(string.Format("{0} {1}", DateTime.UtcNow, runPath));
-                    }
-                }
-
-                //copy build artifacts                
-                FileClient.FileClient.DirectoryCopy(tasksSourcePath, runPath, true);                
-                                
                 var taskRunner = new TaskRunner(runPath);
                 taskRunner.TaskStatus += (t) => AddStatus(t.Status);
                 taskRunner.TasksCompleted += (t) =>
@@ -89,7 +60,7 @@ namespace AssemblySoft.DevOps.TestClient
                 };
 
                 Task<DevOpsTaskStatus> t1 = new Task<DevOpsTaskStatus>(() =>
-                {                    
+                {
                     return taskRunner.Run(token, Path.Combine(runPath, "build.tasks"));
 
                 }, token);
@@ -108,7 +79,7 @@ namespace AssemblySoft.DevOps.TestClient
                         buttonCancelTasks.Enabled = false;
                     }
 
-                    //button_Start_Tasks.Enabled = true; //uncomment to prevent multiple instances                                       
+                    button_Start_Tasks.Enabled = true; //uncomment to prevent multiple instances                                       
 
                     try
                     {
@@ -143,6 +114,42 @@ namespace AssemblySoft.DevOps.TestClient
                 //var tasks = taskRunner.GetDevOpsTaskWithState();
                 // _taskRunner.SerializeTasksToFile(tasks, ConfigurationManager.AppSettings["tasksPath"]);
             }
+        }
+
+        private string InitialiseBuildRun()
+        {
+            var tasksDestinationPath = ConfigurationManager.AppSettings["tasksRunnerRootPath"];
+
+            //root path for the source task artifacts
+            var tasksSourcePath = ConfigurationManager.AppSettings["tasksSourcePath"];
+
+            //create new directory for tasks to run
+            if (!Directory.Exists(tasksDestinationPath))
+            {
+                Directory.CreateDirectory(tasksDestinationPath);
+            }
+
+            int latestCount = GetNextBuildNumber(tasksDestinationPath);
+
+            var runPath = Path.Combine(tasksDestinationPath, string.Format("{0}", latestCount));
+            Directory.CreateDirectory(runPath);
+
+            //generate basic log to identify task run
+            string path = Path.Combine(runPath, string.Format("{0}", "build.log"));
+            // This text is added only once to the file.
+            if (!File.Exists(path))
+            {
+                // Create a file to write to.
+                using (StreamWriter sw = File.CreateText(path))
+                {
+                    sw.WriteLine(string.Format("{0} Ver: {1}", "Build Runner version", "2.1"));
+                    sw.WriteLine(string.Format("{0} {1}", DateTime.UtcNow, runPath));
+                }
+            }
+
+            //copy build artifacts                
+            FileClient.FileClient.DirectoryCopy(tasksSourcePath, runPath, true);
+            return runPath;
         }
 
         private static int GetNextBuildNumber(string rootPath)
