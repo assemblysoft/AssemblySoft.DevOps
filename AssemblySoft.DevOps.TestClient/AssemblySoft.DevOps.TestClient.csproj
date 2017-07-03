@@ -35,8 +35,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AssemblySoft.FileClient, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AssemblySoft.FileClient.1.0.5\lib\net452\AssemblySoft.FileClient.dll</HintPath>
+    <Reference Include="AssemblySoft.IO, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AssemblySoft.IO.1.0.1\lib\net461\AssemblySoft.IO.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
