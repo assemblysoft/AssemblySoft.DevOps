@@ -1,3 +1,4 @@
+using AssemblySoft.IO;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -148,7 +149,7 @@ namespace AssemblySoft.DevOps.TestClient
             }
 
             //copy build artifacts                
-            FileClient.FileClient.DirectoryCopy(tasksSourcePath, runPath, true);
+            DirectoryClient.DirectoryCopy(tasksSourcePath, runPath, true);
             return runPath;
         }
 
