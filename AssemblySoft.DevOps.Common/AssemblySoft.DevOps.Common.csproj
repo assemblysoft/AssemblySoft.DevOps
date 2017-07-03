@@ -43,7 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Constants.cs" />    
+    <Compile Include="Constants.cs" />
     <Compile Include="NotifyTask.cs" />
     <Compile Include="DevOpsTask.cs" />
     <Compile Include="IDevOpsTask.cs" />
