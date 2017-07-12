@@ -6,5 +6,6 @@ namespace AssemblySoft.DevOps.Common
     {
         public const string TASKS = "tasks";
         public const string SCRIPTS = "scripts";
+        public const string ASSETS = "assets";
     }
 }
