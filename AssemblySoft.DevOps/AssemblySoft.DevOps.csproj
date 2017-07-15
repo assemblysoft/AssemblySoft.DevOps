@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AssemblySoft.Serialization, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AssemblySoft.Serialization.1.0.0.2\lib\net452\AssemblySoft.Serialization.dll</HintPath>
+      <HintPath>..\packages\AssemblySoft.Serialization.1.0.3\lib\net452\AssemblySoft.Serialization.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -54,13 +54,13 @@
     <Compile Include="TaskStatusEventArg.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\AssemblySoft.DevOps.Common\AssemblySoft.DevOps.Common.csproj">
       <Project>{6216e720-6176-4aa6-a4c6-b572ea4f1e35}</Project>
       <Name>AssemblySoft.DevOps.Common</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
