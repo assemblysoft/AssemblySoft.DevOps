@@ -9,6 +9,9 @@ A task is the single unit that performs something meaningful. It could be to run
 
 ### Tasks Definition
 A build, or execution of a set of steps, starts with a definition. A tasks definition is a collection of tasks that can run sequentially or in parallel.
+An simple example of a set of tasks can be found here:
+https://github.com/assemblysoft/AssemblySoft.DevOps/blob/master/AssemblySoft.DevOps.TestClient/data/build.tasks
+
 
 ### Coded Tasks
 For more complex scenarios that require existing or new executable binaries to be run, custom build tasks can be created.
@@ -19,7 +22,7 @@ The task runner takes a tasks definition and executes each task either sequentia
 
 
 ### Usage
-Included in the project is an example coded task
+Included in the project is an example project and simple set of coded tasks that are defined in the task definition mentioned above.
 
 
 ### User Interface
