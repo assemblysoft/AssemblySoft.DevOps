@@ -1,7 +1,8 @@
 # AssemblySoft.DevOps
 software DEVelopment and software OPerationS  library which includes a task runner capable of managing configurable light weight tasks 
 
-Simple DevOps library which enables independent development of tasks
+### Goal
+Simple DevOps library which enables independent development of tasks on prem
 
 
 ### Task
