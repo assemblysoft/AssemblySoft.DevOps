@@ -5,6 +5,17 @@ software DEVelopment and software OPerationS  library which includes a task runn
 Simple DevOps library which enables independent development of tasks on prem
 
 
+#### Why?
+I had a set of tasks that that i wanted to run either sequentially or in parallel and didn't want the overhead of a full blown product. 
+It covered two initial scenarios.
+
+ - Build and Package some bespoke software that had a fairly complicated set of steps
+ - Have a remote agent perform setup of developer machines off shore, including installing software, configuring repos and machine settings. https://github.com/assemblysoft/AssemblySoft.WonkaAgent
+ 
+Since then, have utilised it to combine with on premise part of an overall Azure DevOps Pipeline. 
+
+
+
 ### Task
 A task is the single unit that performs something meaningful. It could be to run a script, copy a directory, contact a web service or as simple as outputting a message to the console.
 
