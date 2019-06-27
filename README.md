@@ -13,6 +13,22 @@ A build, or execution of a set of steps, starts with a definition. A tasks defin
 A simple example of a set of tasks can be found here:
 https://github.com/assemblysoft/AssemblySoft.DevOps/blob/master/AssemblySoft.DevOps.TestClient/data/build.tasks
 
+The above example is presented as a serialised collection of DevOps tasks, serialized as xml. This could be any format but the example utilises an XML serializer. Once the tasks are loaded into memory, they can be processed.
+
+#### DevOps Task
+A DevOps task comprises of the following properties:
+
+| Property        | Value           | Description  |
+| ------------- |:-------------:| -----:|
+| Id      | 79548566-e223-49ef-8296-d06a4a5dd48b | Unique id of the task (GUID) |
+| Status      | Idle      |   Status of the task. (Get's updated during execution) |
+| Assembly | AssemblySoft.DevOps.Task.Example.dll      |    .Net Assembly (Used to reference assembly via reflection) |
+| Namespace | AssemblySoft.DevOps.Task.Example.DelayTask      |    .Net Assembly Namespace (Used to reference assembly via reflection) |
+| Method | GoToSleepForTenSeconds      |    Name of the method (Needs to follow API convention) |
+| Enabled | true      |    Whether task is currently enabled. (Disabled will ignore the task on next pass of the runner) |
+| Order | N      |  The sequential order of processing. (Parallel execution can be enabled by using the same number)  |
+| Description | Go to sleep for ten seconds      |  Meaningful description. (Will be used in output of the task)   |
+
 
 ### Coded Tasks
 For more complex scenarios that require existing or new executable binaries to be run, custom build tasks can be created.
