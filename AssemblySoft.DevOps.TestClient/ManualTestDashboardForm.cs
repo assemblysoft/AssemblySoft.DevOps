@@ -62,7 +62,7 @@ namespace AssemblySoft.DevOps.TestClient
 
                 Task<DevOpsTaskStatus> t1 = new Task<DevOpsTaskStatus>(() =>
                 {
-                    return taskRunner.Run(token, Path.Combine(runPath, "build.tasks"));
+                    return taskRunner.Run(token, Path.Combine(runPath, "install.tasks"));
 
                 }, token);
 

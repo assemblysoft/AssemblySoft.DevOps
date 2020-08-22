@@ -12,7 +12,7 @@ namespace AssemblySoft.DevOps.Task.Example
     /// <remarks>
     /// Derives from NotifyTask to emit output to the task runner
     /// </remarks>
-    public class RunBuildTask : NotifyTask
+    public class BuildTask : NotifyTask
     {       
 
         /// <summary>
